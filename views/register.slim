@@ -1,0 +1,9 @@
+- if session[:raise_error] == true 
+    - session[:raise_error] = false
+    p = session[:error_message]
+
+form action="/users" method="post"
+    input type="text" placeholder="Enter username" name="username" /
+    input type="text" placeholder="Enter password" name="password" /
+    input type="text" placeholder="Confirm password" name="password_confirmation" /
+    input type="submit" value="Register"

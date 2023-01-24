@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+html lang="en"
+    head
+        meta charset="UTF-8"/
+        meta http-equiv="X-UA-Compatible" content="IE=edge"/
+        meta name="viewport" content="width=device-width, initial-scale=1.0"/
+        title Document
+        style
+    body 
+        header
+            - if session[:user] != nil
+                - p session[:user] 
+                h2 = "#{session[:user]["username"]}"
+            - else 
+                #log_in_button Log in
+                a href="/register/new" Register 
+
+            #log_in_form 
+                form action="/log_in" method="post"
+                    input type="text" placeholder="Username" name="username" / 
+                    input type="text" placeholder="Password" name="password" / 
+
+
+        == yield
