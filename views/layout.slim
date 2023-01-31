@@ -5,20 +5,28 @@ html lang="en"
         meta http-equiv="X-UA-Compatible" content="IE=edge"/
         meta name="viewport" content="width=device-width, initial-scale=1.0"/
         title Document
-        style
+        link rel="stylesheet" href="/css/style.css"/
     body 
         header
-            - if session[:user] != nil
-                - p session[:user] 
-                h2 = "#{session[:user]["username"]}"
-            - else 
-                #log_in_button Log in
-                a href="/register/new" Register 
+            #links 
+                a href="#" länk1
+                a href="#" länk2
+                a href="#" länk3
 
-            #log_in_form 
-                form action="/log_in" method="post"
-                    input type="text" placeholder="Username" name="username" / 
-                    input type="text" placeholder="Password" name="password" / 
+            #user_interaction
+                - if session[:user] != nil
+                    - p session[:user] 
+                    h2 = "#{session[:user]["username"]}"
+                - else 
+                    #log_in_button Log in
+                    a href="/register/new" Register 
+
+                #log_in_form class="log_in_active"
+                    form action="/log_in" method="post"
+                        input type="text" placeholder="Username" name="username" / 
+                        input type="text" placeholder="Password" name="password" / 
 
 
         == yield
+        
+        / script src="/public/js/script.css"

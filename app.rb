@@ -6,6 +6,10 @@ require 'bcrypt'
 
 enable :sessions
 
+get('/') do
+    slim(:main)
+end
+
 get('/users/new') do
     if session[:last_route_visited] == nil
         session[:last_route_visited] = "/users/new"
