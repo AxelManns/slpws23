@@ -17,16 +17,28 @@ html lang="en"
                 - if session[:user] != nil
                     - p session[:user] 
                     h2 = "#{session[:user]["username"]}"
+                    form action="/log_out" method="post"
+                        input type="submit" value="Log out" 
                 - else 
                     #log_in_button Log in
-                    a href="/register/new" Register 
+                    a href="/users/new" Register 
 
-                #log_in_form class="log_in_active"
+                - if session[:log_in_error] == true 
+                    - class_var = "log_in_active"
+                - else 
+                    - class_var = nil 
+                #log_in_form class="#{class_var}"
+                    - p session
+                    - if session[:log_in_error] == true 
+                        - p "iahw"
+                        - session[:log_in_error] = false
+                        p = session[:error_message]
                     form action="/log_in" method="post"
                         input type="text" placeholder="Username" name="username" / 
                         input type="text" placeholder="Password" name="password" / 
+                        input type="submit" value="Log in" /
 
 
         == yield
         
-        / script src="/public/js/script.css"
+        script src="/js/script.js"
