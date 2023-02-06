@@ -7,13 +7,19 @@ require 'bcrypt'
 enable :sessions
 
 before do
-    p request.request_method
+    # p request.path_info, request.request_method
+    if request.request_method == "GET"
+        if session[:current_route] != nil
+            session[:last_route_visited] = session[:current_route]
+        end
+        session[:current_route] = request.path_info
+    end
 end
 
-def change_routes(current_route)
-    session[:last_route_visited] = session[:current_route]
-    session[:current_route] = current_route
-end
+# def change_routes(current_route)
+#     session[:last_route_visited] = session[:current_route]
+#     session[:current_route] = current_route
+# end
 
 def get_dataBase()
     db = SQLite3::Database.new("db/Database.db")
@@ -22,7 +28,6 @@ def get_dataBase()
 end
 
 get('/') do
-    change_routes('/')
     slim(:main)
 end
 
@@ -50,10 +55,10 @@ post('/log_out') do
 end
 
 get('/users/new') do
-    if session[:last_route_visited] == nil
-        session[:last_route_visited] = "/users/new"
-    end
-    change_routes(request.path_info)
+    # if session[:last_route_visited] == nil
+    #     session[:last_route_visited] = "/users/new"
+    # end
+    # change_routes(request.path_info)
     slim(:register)
 end
 
@@ -90,3 +95,18 @@ post('/users') do
     redirect("#{session[:last_route_visited]}")
 end
 
+get('/search') do
+    search_input = params[:search_input]
+    db = get_dataBase()
+    results = {:Users => [], :Problems => []}
+    [{:table_name => "Users", :variables => "username"}, {:table_name => "Problems", :variables => ["name", "description"]}].each do |table|
+        table[:variables].each do |variable|
+            content = db.excute("SELECT ? FROM ?", variable, table[:table_name])
+            if content.includes?(search_input)
+                
+
+end
+
+get('/problem') do
+    slim(:problem)
+end

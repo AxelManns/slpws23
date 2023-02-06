@@ -11,7 +11,10 @@ html lang="en"
             #links 
                 a href="#" länk1
                 a href="#" länk2
-                a href="#" länk3
+                a href="#" Problems
+                form action="/search" method="get" id="search_bar"
+                    input type="text" placeholder="Search" name="search_input" 
+                    input type="submit"
 
             #user_interaction
                 - if session[:user] != nil

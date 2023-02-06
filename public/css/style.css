@@ -21,7 +21,9 @@ a {
 }
 
 #links {
-    width: min-content;
+    display:flex;
+    justify-content: space-between;
+    width: 65vw;
     height: min-content;
     /* background-color: red; */
 }
