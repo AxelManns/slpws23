@@ -27,6 +27,41 @@ def get_dataBase()
     return db
 end
 
+def rank(array, term)
+    sorted_arr = []
+    array.each do |item|
+        score = 0
+        i = 0
+        while item[i..i + term.length-1].downcase != term
+            i += 1
+        end
+        # kollar hur stor del av item som är termen vi söker efter och vart i item som termen ligger för att ranka hur bra de olika itemsen matchar termen
+        score = (term.length.to_f / item.length.to_f + (item.length - 1 - i.to_f) / (item.length.to_f - 1))/2
+        if sorted_arr.length != 0 
+            i = 0
+            # p sorted_arr[i]
+            while i < sorted_arr.length && sorted_arr[i][1] >= score
+                # p sorted_arr[i]
+                i += 1
+            end
+            if i != 0
+                sorted_arr = sorted_arr[0..i] + [[item, score]] + sorted_arr[i..sorted_arr.length]
+            else
+                sorted_arr = [[item, score]] + sorted_arr
+            end
+        else
+            sorted_arr << [item, score]
+        end
+        # p sorted_arr
+    end
+    final_ranking = []
+    sorted_arr.each do |arr|
+        final_ranking << arr[0]
+    end
+    # p final_ranking
+    return final_ranking
+end
+
 get('/') do
     slim(:main)
 end
@@ -98,13 +133,26 @@ end
 get('/search') do
     search_input = params[:search_input]
     db = get_dataBase()
-    results = {:Users => [], :Problems => []}
-    [{:table_name => "Users", :variables => "username"}, {:table_name => "Problems", :variables => ["name", "description"]}].each do |table|
+    # results = {:Users => [], :Problems => []}
+    results = {"Users" => [], "Problems" => []}
+    result_ids = {"Users" => [], "Problems" => []}
+    [{:table_name => "Users", :variables => ["username"]}, {:table_name => "Problems", :variables => ["name", "description"]}].each do |table|
         table[:variables].each do |variable|
-            content = db.excute("SELECT ? FROM ?", variable, table[:table_name])
-            if content.includes?(search_input)
-                
+            p table, variable
+            content = db.execute("SELECT #{variable} FROM #{table[:table_name]} WHERE #{variable} LIKE '%#{search_input}%'")
+            content.each do |item|
+                results[table[:table_name]] << item["username"]
+            end
+            results[table[:table_name]] = rank(results[table[:table_name]], search_input)
+            # p results
+            results[table[:table_name]].each do |result|
+                result_ids[table[:table_name]] << db.execute("SELECT id FROM #{table[:table_name]} WHERE #{variable} = ?", result).first["id"]
+            end
 
+            # if content.includes?(search_input)
+        end
+    end
+    slim(:search_results, locals:{result_ids:result_ids})
 end
 
 get('/problem') do
