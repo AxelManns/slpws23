@@ -1,2 +1,6 @@
-p = result_ids
+- result_ids["Users"].each do |re_id|
+    - result = get_where("*", "Users", "id", re_id).first
+    .profile_summary
+        h2 = result["username"]
+        p = result["bio"]
 

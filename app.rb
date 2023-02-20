@@ -3,6 +3,7 @@ require 'sinatra/reloader'
 require 'slim'
 require 'sqlite3'
 require 'bcrypt'
+require_relative './model.rb'
 
 enable :sessions
 
@@ -81,12 +82,13 @@ post('/log_in') do
         session[:raise_error] = true
         session[:error_message] = "Password is incorrect"
     end
-    redirect("#{session[:last_route_visited]}")
+    p session[:current_route]
+    redirect("#{session[:current_route]}")
 end
 
 post('/log_out') do 
     session[:user] = nil
-    redirect("#{session[:last_route_visited]}")
+    redirect("#{session[:current_route]}")
 end
 
 get('/users/new') do
@@ -125,35 +127,45 @@ post('/users') do
         redirect("/users/new")
     end
     password_digest = BCrypt::Password.create(password)
-    db.execute("INSERT INTO Users (username, password_digest) VALUES (?,?)",new_username, password_digest)
+    db.execute("INSERT INTO Users (username, password_digest, followers) VALUES (?,?,0)",new_username, password_digest)
     session[:user] = db.execute("SELECT * FROM Users WHERE username = ?", new_username).first
     redirect("#{session[:last_route_visited]}")
 end
 
 get('/search') do
     search_input = params[:search_input]
-    db = get_dataBase()
-    # results = {:Users => [], :Problems => []}
-    results = {"Users" => [], "Problems" => []}
-    result_ids = {"Users" => [], "Problems" => []}
-    [{:table_name => "Users", :variables => ["username"]}, {:table_name => "Problems", :variables => ["name", "description"]}].each do |table|
-        table[:variables].each do |variable|
-            p table, variable
-            content = db.execute("SELECT #{variable} FROM #{table[:table_name]} WHERE #{variable} LIKE '%#{search_input}%'")
-            content.each do |item|
-                results[table[:table_name]] << item["username"]
-            end
-            results[table[:table_name]] = rank(results[table[:table_name]], search_input)
-            # p results
-            results[table[:table_name]].each do |result|
-                result_ids[table[:table_name]] << db.execute("SELECT id FROM #{table[:table_name]} WHERE #{variable} = ?", result).first["id"]
-            end
+    # kunde inte få request.path_info att ta med hela pathen så var tvungen att manuelt ta med vad search inputen var lika med
+    session[:current_route] = request.path_info + "?search_input=#{search_input}"
+    if search_input == 
+        session[:search_error] = true
+        session[:error_message] = "Cannot search without input"
+        redirect(session[:last_route_visited])
+    else
+        db = get_dataBase()
+        # results = {:Users => [], :Problems => []}
+        results = {"Users" => [], "Problems" => []}
+        result_ids = {"Users" => [], "Problems" => []}
+        [{:table_name => "Users", :variables => ["username"]}, {:table_name => "Problems", :variables => ["name", "description"]}].each do |table|
+            table[:variables].each do |variable|
+                # p table, variable
+                content = db.execute("SELECT #{variable} FROM #{table[:table_name]} WHERE #{variable} LIKE '%#{search_input}%'")
+                content.each do |item|
+                    results[table[:table_name]] << item["username"]
+                end
+                results[table[:table_name]] = rank(results[table[:table_name]], search_input)
+                # p results
+                results[table[:table_name]].each do |result|
+                    result_ids[table[:table_name]] << db.execute("SELECT id FROM #{table[:table_name]} WHERE #{variable} = ?", result).first["id"]
+                end
 
-            # if content.includes?(search_input)
+                # if content.includes?(search_input)
+            end
         end
+        slim(:search_results, locals:{result_ids:result_ids})
     end
-    slim(:search_results, locals:{result_ids:result_ids})
 end
+
+
 
 get('/problem') do
     slim(:problem)
