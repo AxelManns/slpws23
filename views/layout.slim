@@ -12,36 +12,43 @@ html lang="en"
                 a href="#" länk1
                 a href="#" länk2
                 a href="#" Problems
-                - if session[:search_error] == true 
-                    p = session[:error_message]
+                - if session[:search_error] != "" 
+                    p = session[:search_error] 
+                    - session[:search_error] = ""
+                    / - p session[:search_error]
                 form action="/search" method="get" id="search_bar"
                     input type="text" placeholder="Search" name="search_input"
                     input type="submit"
 
             #user_interaction
                 - if session[:user] != nil
-                    - p session[:user] 
-                    h2 = "#{session[:user]["username"]}"
-                    form action="/log_out" method="post"
-                        input type="submit" value="Log out" 
+                    / - p session[:user] 
+                    / - p session[:user]["profile_pic"]
+                    / a href="/profile/#{session[:user]["username"]}" img class="profile_pic" id="profile_pic_header" src="..#{session[:user]["profile_pic"]}" alt="profile picture"/
+                    img class="profile_pic" id="profile_pic_header" src="..#{session[:user]["profile_pic"]}" alt="profile picture"/
+                    #name_and_logout
+                        h2 = "#{session[:user]["username"]}"
+                        form action="/log_out" method="post"
+                            input type="submit" value="Log out" 
                 - else 
-                    #log_in_button Log in
-                    a href="/users/new" Register 
+                    #log_in_button class="log_in_or_register" Log in
+                    a class="log_in_or_register" href="/users/new" Register 
 
-                - if session[:log_in_error] == true 
+                - if session[:log_in_error] != "" 
                     - class_var = "log_in_active"
                 - else 
                     - class_var = nil 
-                #log_in_form class="#{class_var}"
+                #log_in_form_container class="#{class_var}"
                     - p session
-                    - if session[:log_in_error] == true 
-                        - p "iahw"
-                        - session[:log_in_error] = false
-                        p = session[:error_message]
-                    form action="/log_in" method="post"
-                        input type="text" placeholder="Username" name="username" / 
-                        input type="text" placeholder="Password" name="password" / 
-                        input type="submit" value="Log in" /
+                    - if session[:log_in_error] != "" 
+                        / - p "iahw"
+                        p = session[:log_in_error]
+                        - session[:log_in_error] = ""
+                    h2 Log in
+                    form action="/log_in" method="post" id="log_in_form"
+                        input type="text" placeholder="Username" name="username" class="log_in_item" / 
+                        input type="text" placeholder="Password" name="password" class="log_in_item" / 
+                        input type="submit" value="Log in" class="log_in_item" /
 
 
         == yield

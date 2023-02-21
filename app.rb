@@ -74,13 +74,11 @@ post('/log_in') do
     password_from_db = db.execute("SELECT password_digest FROM Users WHERE username = ?", username).first
     p password_from_db
     if password_from_db == nil
-        session[:raise_error] = true
-        session[:error_message] = "Username does not exist"
+        session[:log_in_error] = "Username does not exist"
     elsif BCrypt::Password.new(password_from_db["password_digest"]) == password
         session[:user] = db.execute("SELECT * FROM Users WHERE username = ?", username).first
     else
-        session[:raise_error] = true
-        session[:error_message] = "Password is incorrect"
+        session[:log_in_error] = "Password is incorrect"
     end
     p session[:current_route]
     redirect("#{session[:current_route]}")
@@ -127,18 +125,18 @@ post('/users') do
         redirect("/users/new")
     end
     password_digest = BCrypt::Password.create(password)
-    db.execute("INSERT INTO Users (username, password_digest, followers) VALUES (?,?,0)",new_username, password_digest)
+    db.execute("INSERT INTO Users (username, password_digest) VALUES (?,?)",new_username, password_digest)
     session[:user] = db.execute("SELECT * FROM Users WHERE username = ?", new_username).first
     redirect("#{session[:last_route_visited]}")
 end
 
 get('/search') do
     search_input = params[:search_input]
+    session[:current_route] = "/search?search_input=#{search_input}"
     # kunde inte få request.path_info att ta med hela pathen så var tvungen att manuelt ta med vad search inputen var lika med
     session[:current_route] = request.path_info + "?search_input=#{search_input}"
-    if search_input == 
-        session[:search_error] = true
-        session[:error_message] = "Cannot search without input"
+    if search_input == ""
+        session[:search_error] = "Cannot search without input"
         redirect(session[:last_route_visited])
     else
         db = get_dataBase()
@@ -165,7 +163,12 @@ get('/search') do
     end
 end
 
-
+get('/profile/:username') do
+    username = params[:username]
+    user_data = get_where("*", "Users", "username", username).first
+    p user_data
+    slim(:profile, locals:{user_data:user_data})
+end
 
 get('/problem') do
     slim(:problem)
