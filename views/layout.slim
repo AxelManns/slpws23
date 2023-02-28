@@ -24,8 +24,9 @@ html lang="en"
                 - if session[:user] != nil
                     / - p session[:user] 
                     / - p session[:user]["profile_pic"]
-                    / a href="/profile/#{session[:user]["username"]}" img class="profile_pic" id="profile_pic_header" src="..#{session[:user]["profile_pic"]}" alt="profile picture"/
-                    img class="profile_pic" id="profile_pic_header" src="..#{session[:user]["profile_pic"]}" alt="profile picture"/
+                    a href="/profile/#{session[:user]["username"]}" 
+                        img class="profile_pic" id="profile_pic_header" src="..#{session[:user]["profile_pic"]}" alt="profile picture"/
+                    / img class="profile_pic" id="profile_pic_header" src="..#{session[:user]["profile_pic"]}" alt="profile picture"/
                     #name_and_logout
                         h2 = "#{session[:user]["username"]}"
                         form action="/log_out" method="post"

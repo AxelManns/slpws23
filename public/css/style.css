@@ -107,12 +107,17 @@ a {
     /* flex-direction: column;
     align-items: center;
     justify-content: space-between; */
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr;
+    width: 100vw;
+    height:auto;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
     grid-template-areas: 
-        "de"
-        "ps"
+     "bd bd"
+     "de ps"
     ;
+    /* background-color: rgb(244, 244, 244); */
+    background-color: rgb(234, 234, 234);
+    /* background-color: red; */
     /* width: 25vw; */
     /* border-bottom-right-radius: 2vw;
     border-color: grey;
@@ -125,20 +130,76 @@ a {
 #text_block_profile {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     /* width:70vw; */
+    /* margin-left: 5vw; */
     margin-bottom:7vh;
+    /* background-color: green; */
+    position:relative;
+    bottom:14vh;
 
 }
+#username_profile {
+    display:flex;
+    justify-content: space-between;
+    width:100%;
+    size: fit-content;
+    /* margin-left:5vw;     */
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    /* background-color:blue; */
+}
+#description {
+    grid-area: de;
+    display:flex;
+    flex-direction: column;
+    justify-content: space-between;
+    /* justify-content: flex-start; */
+    align-items: center;
+    width: 30vw;
+    height: fit-content;
+    background-color: rgb(234, 234, 234);
+    /* background-color: red; */
+    /* position:relative;
+    top:8vh; */
+}
+
+#banner {
+    grid-area: bd;
+    width: 100%;    
+    height:40vh;
+}
+
 #profile_site_pic {
     width:15vw;
     /* margin:3vw; */
-    border-color: white;
+    border-color: rgb(244, 244, 244);
     border-style: solid;
     border-width: 5px;
     position:relative;
-    bottom: -8vw;
+    bottom: 8vw;
+}
+.follow_button {
+    border:none;
+    border-top-right-radius: 1rem;
+    border-top-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+    border-bottom-left-radius: 1rem;
+    /* padding:2vh; */
+    height:2.5rem;
+    width:4rem;
+    background-color:green;
+    color:white;
+    /* position:relative;
+    top: 10vh; */
+    margin-left:1vw;
+}
+#unfollow_button {
+    background-color: white;
+    color: green;
+    font-weight: 550;
 }
 #profile_bio {
     display: flex;
@@ -151,6 +212,8 @@ a {
     justify-content: space-between;
     align-items: flex-end;
     height:16vw;
-    padding-left: 5vw;
-    padding-right: 5vw;
+    /* width: 90%; */
+    /* padding-left: 5%;
+    padding-right: 5%; */
+    /* margin-bottom: 9vw; */
 }

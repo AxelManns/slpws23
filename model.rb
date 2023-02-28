@@ -11,3 +11,21 @@ helpers do
         return db.execute("SELECT #{requested_cont} FROM #{table} WHERE #{condition} = ?",var)
     end
 end
+
+helpers do
+    def follows?(user_id, follower_id)
+        db = get_dataBase()
+        check = db.execute("SELECt * FROM Follower_rel WHERE (user_id, followed_by_id) = (?,?)", user_id, follower_id)
+        p check
+        if check != []
+            return true
+        else
+            return false
+        end
+    end
+end
+
+def clear_table(tablename)
+    db = get_dataBase()
+    db.execute("DELETE FROM #{tablename}")
+end

@@ -164,12 +164,50 @@ get('/search') do
 end
 
 get('/profile/:username') do
+    # p session[:current_route]
     username = params[:username]
     user_data = get_where("*", "Users", "username", username).first
-    p user_data
-    slim(:profile, locals:{user_data:user_data})
+    # p user_data
+    slim(:"profile/show", locals:{user_data:user_data})
+end
+
+get('/profile/self/edit') do
+    slim(:"profile/edit")
+end
+post('/change_profile_pic') do
+    # p params[:file]
+    path = File.join("./public/uploaded_pictures/",params[:file][:filename])
+    File.write(path,File.read(params[:file][:tempfile]))
+    # db = get_dataBase()
+    # p path
+    # db.execute("UPDATE Users SET profile_pic = path")
+    redirect('profile/self/edit')
+end
+
+post("/follow/:user_to_follow") do
+    user_to_follow_id = params[:user_to_follow]
+    db = get_dataBase()
+    # p session["user"]
+    #  (User_id, Followed_by_user_id)
+    # p db.execute("SELECT followers FROM Users  where id = ?", user_to_follow_id).first
+    db.execute("INSERT INTO Follower_rel VALUES (#{user_to_follow_id}, #{session[:user]["id"]})")
+    db.execute("UPDATE Users SET followers = #{db.execute("SELECT followers FROM Users  where id = ?", user_to_follow_id).first["followers"] + 1} WHERE id = ?", user_to_follow_id)
+    redirect("/profile/#{db.execute("SELECT username FROM Users WHERE id = #{user_to_follow_id}").first["username"]}")
+end
+
+post("/unfollow/:user_to_unfollow_id") do
+    user_to_unfollow_id = params[:user_to_unfollow_id]
+    db = get_dataBase()
+    # p session["user"]
+    # #  (User_id, Followed_by_user_id)
+    # p db.execute("SELECT followers FROM Users  where id = ?", user_to_follow_id).first
+    db.execute("DELETE FROM Follower_rel WHERE (user_id, followed_by_id) = (?,?)", user_to_unfollow_id, session[:user]["id"])
+    db.execute("UPDATE Users SET followers = #{db.execute("SELECT followers FROM Users  where id = ?", user_to_unfollow_id).first["followers"] - 1} WHERE id = ?", user_to_unfollow_id)
+    redirect("/profile/#{db.execute("SELECT username FROM Users WHERE id = #{user_to_unfollow_id}").first["username"]}")
 end
 
 get('/problem') do
     slim(:problem)
 end
+
+# clear_table("Follower_rel")
