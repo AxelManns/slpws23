@@ -1,0 +1,6 @@
+form action="/posts/new" method="post"
+    input type="text" name="text_content"
+    input list="boulders" name="boulder"
+    datalist
+        - get_boulders().each do |problem|
+            option value="#{problem["name"]}"

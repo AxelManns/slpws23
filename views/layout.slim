@@ -9,8 +9,8 @@ html lang="en"
     body 
         header
             #links 
-                a href="#" länk1
-                a href="#" länk2
+                a href="/feed" Feed
+                a href="/diary" Private
                 a href="#" Problems
                 - if session[:search_error] != "" 
                     p = session[:search_error] 
@@ -24,11 +24,12 @@ html lang="en"
                 - if session[:user] != nil
                     / - p session[:user] 
                     / - p session[:user]["profile_pic"]
+                    / - p "#{session[:user]["profile_pic"]}"
                     a href="/profile/#{session[:user]["username"]}" 
-                        img class="profile_pic" id="profile_pic_header" src="..#{session[:user]["profile_pic"]}" alt="profile picture"/
+                        img class="profile_pic" id="profile_pic_header" src="#{session[:user]["profile_pic"]}" alt="profile picture"/
                     / img class="profile_pic" id="profile_pic_header" src="..#{session[:user]["profile_pic"]}" alt="profile picture"/
                     #name_and_logout
-                        h2 = "#{session[:user]["username"]}"
+                        h1 = "#{session[:user]["username"]}"
                         form action="/log_out" method="post"
                             input type="submit" value="Log out" 
                 - else 
