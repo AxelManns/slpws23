@@ -1,0 +1,14 @@
+form action="/problems" method="post" enctype="multipart/form-data"
+    input type="file" name="file"
+    input type="text" placeholder="Name of boulder" name="boulder_name"
+    select#grade name="grade"
+        - i = 0
+        - string = ""
+        - while i < 18
+            option value="V#{i}"  V#{i}
+            - string += "V#{i}" 
+            - i += 1
+        - p string
+    input type="text" placeholder="Location" name="location"
+    input type="textarea" placeholder="add description" name="description"
+    input type="submit" value="Establish"

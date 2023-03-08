@@ -28,7 +28,14 @@ def get_dataBase()
     return db
 end
 
-def rank(array, term)
+def update_user_info()
+    db = get_dataBase()
+    session[:user] = db.execute("SELECT * FROM Users WHERE id = ?", session[:user]["id"]).first
+    # p session[:user]
+end
+
+def rank(inp_array, term)
+    array = inp_array.dup
     sorted_arr = []
     array.each do |item|
         score = 0
@@ -37,7 +44,12 @@ def rank(array, term)
             i += 1
         end
         # kollar hur stor del av item som är termen vi söker efter och vart i item som termen ligger för att ranka hur bra de olika itemsen matchar termen
-        score = (term.length.to_f / item.length.to_f + (item.length - 1 - i.to_f) / (item.length.to_f - 1))/2
+        if item.length > 1
+            score = (term.length.to_f / item.length.to_f + (item.length - 1 - i.to_f) / (item.length.to_f - 1))/2
+        else
+            score = 1
+        end
+        # p item, score 
         if sorted_arr.length != 0 
             i = 0
             # p sorted_arr[i]
@@ -72,7 +84,7 @@ post('/log_in') do
     password = params["password"]
     db = get_dataBase()
     password_from_db = db.execute("SELECT password_digest FROM Users WHERE username = ?", username).first
-    p password_from_db
+    # p password_from_db
     if password_from_db == nil
         session[:log_in_error] = "Username does not exist"
     elsif BCrypt::Password.new(password_from_db["password_digest"]) == password
@@ -80,7 +92,7 @@ post('/log_in') do
     else
         session[:log_in_error] = "Password is incorrect"
     end
-    p session[:current_route]
+    # p session[:current_route]
     redirect("#{session[:current_route]}")
 end
 
@@ -143,22 +155,27 @@ get('/search') do
         # results = {:Users => [], :Problems => []}
         results = {"Users" => [], "Problems" => []}
         result_ids = {"Users" => [], "Problems" => []}
-        [{:table_name => "Users", :variables => ["username"]}, {:table_name => "Problems", :variables => ["name", "description"]}].each do |table|
-            table[:variables].each do |variable|
-                # p table, variable
-                content = db.execute("SELECT #{variable} FROM #{table[:table_name]} WHERE #{variable} LIKE '%#{search_input}%'")
-                content.each do |item|
-                    results[table[:table_name]] << item["username"]
-                end
-                results[table[:table_name]] = rank(results[table[:table_name]], search_input)
-                # p results
-                results[table[:table_name]].each do |result|
-                    result_ids[table[:table_name]] << db.execute("SELECT id FROM #{table[:table_name]} WHERE #{variable} = ?", result).first["id"]
-                end
+        # [{:table_name => "Users", :variables => ["username"]}, {:table_name => "Problems", :variables => ["name", "description"]}].each do |table|
+        #     table[:variables].each do |variable|
+        #         # p table, variable
+        #         content = db.execute("SELECT #{variable} FROM #{table[:table_name]} WHERE #{variable} LIKE '%#{search_input}%'")
+        #         # p content
+        #         content.each do |item|
+        #             p item[variable]
+        #             results[table[:table_name]] << item[variable]
+        #         end
+        #         p results
+        #         results[table[:table_name]] = rank(results[table[:table_name]], search_input)
+        #         results[table[:table_name]].each do |result|
+        #             p 
+        #             result_ids[table[:table_name]] << db.execute("SELECT id FROM #{table[:table_name]} WHERE #{variable} = ?", result).first["id"]
+        #         end
 
-                # if content.includes?(search_input)
-            end
-        end
+        #         # if content.includes?(search_input)
+        #     end
+        # end
+        results = db.execute("SELECT * FROM Users WHERE username LIKE '%?%'", search_input)
+        p results
         slim(:search_results, locals:{result_ids:result_ids})
     end
 end
@@ -181,6 +198,15 @@ post('/change_profile_pic') do
     # db = get_dataBase()
     # p path
     # db.execute("UPDATE Users SET profile_pic = path")
+    update_user_info()
+    redirect('profile/self/edit')
+end
+
+post('/change_bio') do
+    new_bio = params[:new_bio]
+    db = get_dataBase()
+    db.execute("UPDATE Users SET bio = ? WHERE id = #{session[:user]["id"]}", new_bio)
+    update_user_info()
     redirect('profile/self/edit')
 end
 
@@ -192,7 +218,8 @@ post("/follow/:user_to_follow") do
     # p db.execute("SELECT followers FROM Users  where id = ?", user_to_follow_id).first
     db.execute("INSERT INTO Follower_rel VALUES (#{user_to_follow_id}, #{session[:user]["id"]})")
     db.execute("UPDATE Users SET followers = #{db.execute("SELECT followers FROM Users  where id = ?", user_to_follow_id).first["followers"] + 1} WHERE id = ?", user_to_follow_id)
-    redirect("/profile/#{db.execute("SELECT username FROM Users WHERE id = #{user_to_follow_id}").first["username"]}")
+    # redirect("/profile/#{db.execute("SELECT username FROM Users WHERE id = #{user_to_follow_id}").first["username"]}")
+    redirect(session[:current_route])
 end
 
 post("/unfollow/:user_to_unfollow_id") do
@@ -203,11 +230,64 @@ post("/unfollow/:user_to_unfollow_id") do
     # p db.execute("SELECT followers FROM Users  where id = ?", user_to_follow_id).first
     db.execute("DELETE FROM Follower_rel WHERE (user_id, followed_by_id) = (?,?)", user_to_unfollow_id, session[:user]["id"])
     db.execute("UPDATE Users SET followers = #{db.execute("SELECT followers FROM Users  where id = ?", user_to_unfollow_id).first["followers"] - 1} WHERE id = ?", user_to_unfollow_id)
-    redirect("/profile/#{db.execute("SELECT username FROM Users WHERE id = #{user_to_unfollow_id}").first["username"]}")
+    # redirect("/profile/#{db.execute("SELECT username FROM Users WHERE id = #{user_to_unfollow_id}").first["username"]}")
+    redirect(session[:current_route])
 end
 
-get('/problem') do
-    slim(:problem)
+get('/problems/show') do
+    slim(:"problems/index")
+end
+
+get('/problems/show/:boulder_name') do 
+    boulder_name = params[:boulder_name]
+    db = get_dataBase()
+    boulder_data = db.execute("SELECT * FROM Problems WHERE name = ?", boulder_name).first
+    slim(:"problems/show", locals:{boulder_data:boulder_data})
+end
+
+get('/problems/new') do 
+    slim(:"problems/new")
+end
+
+post('/problems') do
+    db = get_dataBase()
+    if params[:file] != nil
+        path = File.join("./public/uploaded_pictures/",params[:file][:filename])
+        File.write(path,File.read(params[:file][:tempfile]))
+    else
+        path = "/img/no-image-found.png"
+    end
+    boulder_name = params[:boulder_name]
+    grade = params[:grade]
+    location = params[:location]
+    description = params[:description]
+    p boulder_name, location, session[:user]["id"], description, grade, path
+
+    db.execute("INSERT INTO Problems (name, location, set_by, description, grade, pic_path) VALUES (?,?,?,?,?,?)", boulder_name, location, session[:user]["id"], description, grade, path)
+    redirect("/problems/show/#{boulder_name}")
+end
+
+def rank_relevance(posts)
+    return posts
+end
+
+get('/feed') do
+    db = get_dataBase()
+    if session[:user] == nil
+        return "<p>must be logged in to view this content</p>"
+    end
+    follows_id = db.execute("SELECT user_id FROM Follower_rel WHERE followed_by_id = #{session[:user]["id"]}")
+    p follows_id
+    relevant_posts = []
+    follows_id.each do |id_following|
+        content = db.execute("SELECT * FROM Posts WHERE user_id = #{id_following["user_id"]}")
+        if content.length > 0
+            relevant_posts << content
+        end
+    end
+    relevant_posts = rank_relevance(relevant_posts)
+    p relevant_posts
+    slim(:feed, locals:{relevant_posts:relevant_posts})
 end
 
 # clear_table("Follower_rel")

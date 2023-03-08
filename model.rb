@@ -15,13 +15,20 @@ end
 helpers do
     def follows?(user_id, follower_id)
         db = get_dataBase()
-        check = db.execute("SELECt * FROM Follower_rel WHERE (user_id, followed_by_id) = (?,?)", user_id, follower_id)
+        check = db.execute("SELECT * FROM Follower_rel WHERE (user_id, followed_by_id) = (?,?)", user_id, follower_id)
         p check
         if check != []
             return true
         else
             return false
         end
+    end
+end
+
+helpers do
+    def get_boulders()
+        db = get_dataBase()
+        boulders = db.execute("SELECT * FROM Problems")
     end
 end
 
