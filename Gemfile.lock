@@ -13,7 +13,13 @@ GEM
     daemons (1.4.1)
     domain_name (0.5.20190701)
       unf (>= 0.0.5, < 1.0.0)
+<<<<<<< Updated upstream
     eventmachine (1.2.7-x64-mingw32)
+=======
+    eventmachine (1.2.7)
+    eventmachine (1.2.7-x64-mingw32)
+    ffi (1.15.5-x64-mingw-ucrt)
+>>>>>>> Stashed changes
     ffi (1.15.5-x64-mingw32)
     ffi-compiler (1.0.1)
       ffi (>= 1.0.0)
@@ -62,6 +68,10 @@ GEM
     slim (5.1.0)
       temple (~> 0.10.0)
       tilt (>= 2.0.6, < 2.2)
+<<<<<<< Updated upstream
+=======
+    sqlite3 (1.6.1-x64-mingw-ucrt)
+>>>>>>> Stashed changes
     sqlite3 (1.6.1-x64-mingw32)
     temple (0.10.0)
     thin (1.8.1)
@@ -72,6 +82,10 @@ GEM
     timers (4.3.5)
     unf (0.1.4)
       unf_ext
+<<<<<<< Updated upstream
+=======
+    unf_ext (0.0.8.2-x64-mingw-ucrt)
+>>>>>>> Stashed changes
     unf_ext (0.0.8.2-x64-mingw32)
     webrick (1.8.1)
     websocket-driver (0.7.5)
@@ -79,6 +93,10 @@ GEM
     websocket-extensions (0.1.5)
 
 PLATFORMS
+<<<<<<< Updated upstream
+=======
+  x64-mingw-ucrt
+>>>>>>> Stashed changes
   x64-mingw32
 
 DEPENDENCIES
