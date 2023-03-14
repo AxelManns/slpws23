@@ -32,6 +32,29 @@ helpers do
     end
 end
 
+helpers do
+    def get_search_options()
+        db = get_dataBase()
+        search_options = {"combined" => []}
+        # p db.execute("SELECT name FROM Users")
+        search_options["Users"] = db.execute("SELECT username FROM Users")
+        search_options["Problems"] = db.execute("SELECT name, location from Problems")
+        # p search_options
+        {}
+        [{:table_name => "Users", :variables => ["username"]}, {:table_name => "Problems", :variables => ["name", "location"]}].each do |table|
+            table[:variables].each do |variable|
+                search_options[table[:table_name]].each do |temp|
+                    # p temp
+                    # p search_options[table[:table_name]][variable]
+                    search_options["combined"] << temp[variable]
+                end
+            end
+        end
+        # p search_options["combined"]
+        return search_options["combined"]
+    end
+end
+
 def clear_table(tablename)
     db = get_dataBase()
     db.execute("DELETE FROM #{tablename}")

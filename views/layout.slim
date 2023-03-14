@@ -19,12 +19,15 @@ html lang="en"
                 form action="/search" method="get" id="search_bar"
                     input type="text" placeholder="Search" name="search_input"
                     input type="submit"
+                / form action="/search" method="get" id="search_bar"
+                /     input list="options" name="search_input"
+                /     datalist id="options"
+                /         - get_search_options().each do |option|
+                /             option value=option
+                /     input type="submit" value="search"
 
             #user_interaction
                 - if session[:user] != nil
-                    / - p session[:user] 
-                    / - p session[:user]["profile_pic"]
-                    / - p "#{session[:user]["profile_pic"]}"
                     a href="/profile/#{session[:user]["username"]}" 
                         img class="profile_pic" id="profile_pic_header" src="#{session[:user]["profile_pic"]}" alt="profile picture"/
                     / img class="profile_pic" id="profile_pic_header" src="..#{session[:user]["profile_pic"]}" alt="profile picture"/
@@ -41,7 +44,7 @@ html lang="en"
                 - else 
                     - class_var = nil 
                 #log_in_form_container class="#{class_var}"
-                    - p session
+                    / - p session
                     - if session[:log_in_error] != "" 
                         / - p "iahw"
                         p = session[:log_in_error]

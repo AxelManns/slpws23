@@ -15,6 +15,7 @@ before do
         end
         session[:current_route] = request.path_info
     end
+    p session[:current_route]
 end
 
 # def change_routes(current_route)
@@ -31,17 +32,19 @@ end
 def update_user_info()
     db = get_dataBase()
     session[:user] = db.execute("SELECT * FROM Users WHERE id = ?", session[:user]["id"]).first
-    # p session[:user]
 end
 
 def rank(inp_array, term)
     array = inp_array.dup
     sorted_arr = []
     array.each do |item|
+        # p item
         score = 0
         i = 0
-        while item[i..i + term.length-1].downcase != term
+        # p item[i..i + term.length-1]
+        while i + term.length < item.length && item[i..i + term.length-1].downcase != term
             i += 1
+            # p item[i..i + term.length-1]
         end
         # kollar hur stor del av item som är termen vi söker efter och vart i item som termen ligger för att ranka hur bra de olika itemsen matchar termen
         if item.length > 1
@@ -58,7 +61,53 @@ def rank(inp_array, term)
                 i += 1
             end
             if i != 0
-                sorted_arr = sorted_arr[0..i] + [[item, score]] + sorted_arr[i..sorted_arr.length]
+                sorted_arr = sorted_arr[0..i-1] + [[item, score]] + sorted_arr[i..sorted_arr.length]
+            else
+                sorted_arr = [[item, score]] + sorted_arr
+            end
+        else
+            sorted_arr << [item, score]
+        end
+        # p sorted_arr
+    end
+    final_ranking = []
+    sorted_arr.each do |arr|
+        final_ranking << arr[0]
+    end
+    # p final_ranking
+    return final_ranking
+end
+
+def rank_with_id(inp_array, term)
+    array = inp_array.dup
+    # p array
+    sorted_arr = []
+    array.each do |item|
+        p item["variable"]
+        score = 0
+        i = 0
+        # p item["variable"][i..i + term.length-1]
+        while i + term.length < item["variable"].length && item["variable"][i..i + term.length-1].downcase != term
+            i += 1
+            # p item["variable"][i..i + term.length-1]
+        end
+        # kollar hur stor del av item som är termen vi söker efter och vart i item som termen ligger för att ranka hur bra de olika itemsen matchar termen
+        if item["variable"].length > 1
+            score = (term.length.to_f / item["variable"].length.to_f + (item["variable"].length - 1 - i.to_f) / (item["variable"].length.to_f - 1))/2
+        else
+            score = 1
+        end
+        # p item, score 
+        if sorted_arr.length != 0 
+            # p sorted_arr
+            i = 0
+            while i < sorted_arr.length && sorted_arr[i][1] >= score
+                p sorted_arr[i][1]
+                # p sorted_arr[i]
+                i += 1
+            end
+            if i != 0
+                sorted_arr = sorted_arr[0..i-1] + [[item, score]] + sorted_arr[i..sorted_arr.length]
             else
                 sorted_arr = [[item, score]] + sorted_arr
             end
@@ -92,7 +141,6 @@ post('/log_in') do
     else
         session[:log_in_error] = "Password is incorrect"
     end
-    # p session[:current_route]
     redirect("#{session[:current_route]}")
 end
 
@@ -154,34 +202,61 @@ get('/search') do
         db = get_dataBase()
         # results = {:Users => [], :Problems => []}
         results = {"Users" => [], "Problems" => []}
-        result_ids = {"Users" => [], "Problems" => []}
-        # [{:table_name => "Users", :variables => ["username"]}, {:table_name => "Problems", :variables => ["name", "description"]}].each do |table|
-        #     table[:variables].each do |variable|
-        #         # p table, variable
-        #         content = db.execute("SELECT #{variable} FROM #{table[:table_name]} WHERE #{variable} LIKE '%#{search_input}%'")
-        #         # p content
-        #         content.each do |item|
-        #             p item[variable]
-        #             results[table[:table_name]] << item[variable]
-        #         end
-        #         p results
-        #         results[table[:table_name]] = rank(results[table[:table_name]], search_input)
-        #         results[table[:table_name]].each do |result|
-        #             p 
-        #             result_ids[table[:table_name]] << db.execute("SELECT id FROM #{table[:table_name]} WHERE #{variable} = ?", result).first["id"]
-        #         end
-
-        #         # if content.includes?(search_input)
-        #     end
-        # end
-        results = db.execute("SELECT * FROM Users WHERE username LIKE '%?%'", search_input)
-        p results
-        slim(:search_results, locals:{result_ids:result_ids})
+        result_data_array = {"Users" => [], "Problems" => []}
+        [{:table_name => "Users", :variables => ["username"]}, {:table_name => "Problems", :variables => ["name", "location"]}].each do |table|
+            # table[:variables].each do |variable|
+            #     # p table, variable
+            #     content = db.execute("SELECT #{variable} FROM #{table[:table_name]} WHERE #{variable} LIKE '%#{search_input}%'")
+            #     p content
+            #     content.each do |item|
+            #         # p item[variable]
+            #         results[table[:table_name]] << item[variable]
+            #     end
+            #     p results
+            #     results[table[:table_name]] = rank(results[table[:table_name]], search_input)
+            #     results[table[:table_name]].each do |result|
+            #         # p result, "resultat"
+            #         # p db.execute("SELECT id FROM #{table[:table_name]} WHERE #{variable} = ?", result), variable
+            #         if db.execute("SELECT * FROM #{table[:table_name]} WHERE #{variable} = ?", result).first != nil
+            #             result_array[table[:table_name]] << db.execute("SELECT * FROM #{table[:table_name]} WHERE #{variable} = ?", result).first
+                        
+            #         end
+            #     end
+            #     # if content.includes?(search_input)
+            #     # p result_array
+            # end
+            query = ""
+            table[:variables].each_with_index do |variable, i|
+                if i > 0
+                    query += " OR #{variable} LIKE '%#{search_input}%'"
+                else
+                    query += "#{variable} LIKE '%#{search_input}%'"
+                end
+            end
+            p "SELECT * FROM #{table[:table_name]} WHERE #{query}"
+            content = db.execute("SELECT * FROM #{table[:table_name]} WHERE #{query}")
+            # p content
+            unsorted_result = []
+            content.each do |cont|
+                arr = []
+                table[:variables].each do |variable|
+                    arr << cont[variable]
+                end
+                # variable_to_show = rank(arr, search_input).first
+                unsorted_result << {"variable" => rank(arr, search_input).first, "id" => cont["id"]}
+            end
+            p unsorted_result
+            results[table[:table_name]] = rank_with_id(unsorted_result, search_input)
+            results[table[:table_name]].each do |result|
+                result_data_array[table[:table_name]] << db.execute("SELECT * FROM #{table[:table_name]} WHERE id LIKE ?", result["id"]).first
+            end
+        end
+        p result_data_array
+        slim(:search_results, locals:{result_array:result_data_array})
     end
 end
 
 get('/profile/:username') do
-    # p session[:current_route]
     username = params[:username]
     user_data = get_where("*", "Users", "username", username).first
     # p user_data
@@ -213,21 +288,14 @@ end
 post("/follow/:user_to_follow") do
     user_to_follow_id = params[:user_to_follow]
     db = get_dataBase()
-    # p session["user"]
-    #  (User_id, Followed_by_user_id)
-    # p db.execute("SELECT followers FROM Users  where id = ?", user_to_follow_id).first
     db.execute("INSERT INTO Follower_rel VALUES (#{user_to_follow_id}, #{session[:user]["id"]})")
     db.execute("UPDATE Users SET followers = #{db.execute("SELECT followers FROM Users  where id = ?", user_to_follow_id).first["followers"] + 1} WHERE id = ?", user_to_follow_id)
-    # redirect("/profile/#{db.execute("SELECT username FROM Users WHERE id = #{user_to_follow_id}").first["username"]}")
     redirect(session[:current_route])
 end
 
 post("/unfollow/:user_to_unfollow_id") do
     user_to_unfollow_id = params[:user_to_unfollow_id]
     db = get_dataBase()
-    # p session["user"]
-    # #  (User_id, Followed_by_user_id)
-    # p db.execute("SELECT followers FROM Users  where id = ?", user_to_follow_id).first
     db.execute("DELETE FROM Follower_rel WHERE (user_id, followed_by_id) = (?,?)", user_to_unfollow_id, session[:user]["id"])
     db.execute("UPDATE Users SET followers = #{db.execute("SELECT followers FROM Users  where id = ?", user_to_unfollow_id).first["followers"] - 1} WHERE id = ?", user_to_unfollow_id)
     # redirect("/profile/#{db.execute("SELECT username FROM Users WHERE id = #{user_to_unfollow_id}").first["username"]}")

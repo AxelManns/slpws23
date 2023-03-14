@@ -174,6 +174,7 @@ a {
 
 #profile_site_pic {
     width:15vw;
+    height:15vw;
     /* margin:3vw; */
     border-color: rgb(244, 244, 244);
     border-style: solid;
@@ -219,6 +220,7 @@ a {
 }
 
 .profile_summary {
+    grid-area:us;
     display:flex;
     flex-direction: row;
     justify-content: space-between;
@@ -248,6 +250,7 @@ a {
 .profile_pic_search {
     border-radius:100%;
     height: 8vw;
+    width: 8vw;
     margin-right:0.5vw;
 }
 .follow_button_search {
@@ -268,4 +271,72 @@ a {
     /* position:relative;
     bottom: calc((4rem)/2 + (8vw)/2 + 16px); */
     /* left: 40vw; */
+}
+
+#search_wrapper {
+    display:grid;
+    grid-template-columns: 50% 50%;
+    grid-template-rows: 1fr;
+    grid-template-areas: 
+     "us pr"
+    ;
+    /* margin:1%; */
+    /* background-color: green; */
+}
+.summary {
+    /* grid-area:pr; */
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgb(244, 244, 244);
+    border: 1px; 
+    border-color: rgb(219, 219, 219);
+    /* border-radius: 10%; */
+    border-top-right-radius: 16px;
+    border-top-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-style: solid;
+    padding:1%;
+    width:100%;
+}
+
+#users_search {
+    grid-area:us;
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    padding:2%;
+    border: 2px; 
+    border-color: rgb(219, 219, 219);
+    /* border-radius: 10%; */
+    border-top-right-radius: 16px;
+    border-top-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-style: solid;
+}
+#problems_search {
+    grid-area:pr;
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    padding:2%;
+    border: 2px; 
+    border-color: rgb(219, 219, 219);
+    /* border-radius: 10%; */
+    border-top-right-radius: 16px;
+    border-top-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-style: solid;
+}
+.problem_pic_search {
+    border-top-right-radius: 16px;
+    border-top-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    height: 8vw;
+    margin-right:0.5vw;
 }

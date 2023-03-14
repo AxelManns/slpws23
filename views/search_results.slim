@@ -1,21 +1,36 @@
 #search_wrapper
-    - result_ids["Users"].each do |re_id|
-        - result = get_where("*", "Users", "id", re_id).first
+    #users_search
+        h1 Users
+        - result_array["Users"].each do |result|
+            / - result = get_where("*", "Users", "id", re_id).first
 
-        .profile_summary
-            a href="/profile/#{result["username"]}" class="search_link"
-                img src="#{result["profile_pic"]}" alt="" class="profile_pic_search"/
-                .text_box_search
-                    h1 = result["username"]
-                    h3 = "Followers: #{result["followers"]}"
-                    p = result["bio"]
-            - if session[:user] != nil && re_id != session[:user]["id"]
-                - if !(follows?(re_id, session[:user]["id"]))
-                    form action="/follow/#{re_id}" method="post" 
-                        input type="submit" value="Follow" class="follow_button_search" 
-                - else 
-                    form action="/unfollow/#{re_id}" method="post" 
-                        input type="submit" value="Unfollow" class="follow_button_search" id="unfollow_button"
-        
+            .summary
+                a href="/profile/#{result["username"]}" class="search_link"
+                    img src="#{result["profile_pic"]}" alt="" class="profile_pic_search"/
+                    .text_box_search
+                        h2 = result["username"]
+                        h3 = "Followers: #{result["followers"]}"
+                        p = result["bio"]
+                - if session[:user] != nil && result["id"] != session[:user]["id"]
+                    - if !(follows?(result["id"], session[:user]["id"]))
+                        form action="/follow/#{result["id"]}" method="post" 
+                            input type="submit" value="Follow" class="follow_button_search" 
+                    - else 
+                        form action="/unfollow/#{result["id"]}" method="post" 
+                            input type="submit" value="Unfollow" class="follow_button_search" id="unfollow_button"
+
+    #problems_search
+        h1 Problems
+        - result_array["Problems"].each do |result|
+            .summary
+                a href="/problem/#{result["name"]}" class="search_link"
+                    img src="#{result["pic_path"]}" alt="picture of boulder" class="problem_pic_search"/
+                    .text_box_search
+                        h2 = result["name"]
+                        / h3 = "Followers: #{result["followers"]}"
+                        h3 = "Grade: #{result["grade"]}"
+                        p = result["location"]
+                        p = result["description"]
+
 
 
