@@ -59,3 +59,18 @@ def clear_table(tablename)
     db = get_dataBase()
     db.execute("DELETE FROM #{tablename}")
 end
+
+helpers do
+    def get_boulders_sent(user_id)
+        p "detta händer"
+        db = get_dataBase()
+        # p db.execute("SELECT * FROM Problems WHERE id LIKE Problem_User_rel.problem_id AND Problem_User_rel.user_id = ?", user_id)
+        problem_data = []
+        db.execute("SELECT problem_id FROM Problem_User_rel WHERE user_id = #{user_id}").each do |problem_id|
+            problem data << db.execute("SELECT * FROM Problems WHERE id = #{problem_id}").first
+        end
+        # p db.execute("SELECT * FROM Problem_User_rel WHERE user_id = #{user_id} AS table, SELECT * from Problems WHERE Problems.id = table.problem_id")
+        p problem_data
+        return problem_data
+    end
+end

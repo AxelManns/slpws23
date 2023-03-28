@@ -1,4 +1,16 @@
-/Discover boulders
+h2 Tick off boulder
 
+
+/Discover boulders
+- boulders_sent = get_boulders_sent(session[:user]["id"])
 - if boulders_sent != nil 
+    - boulders_sent.each do |boulder|
+        .grid_row 
+            p = boulder["name"]
+            p = boulder["grade"]
+            p = boulder["location"]
+            p = boulder["first_ascent_by"]
+            form action="/unsend_bouder" method="post"
+                input type="submit" value="Remove"
+
     

@@ -11,7 +11,7 @@ html lang="en"
             #links 
                 a href="/feed" Feed
                 a href="/diary" Private
-                a href="#" Problems
+                a href="/problems/show" Problems
                 - if session[:search_error] != "" 
                     p = session[:search_error] 
                     - session[:search_error] = ""

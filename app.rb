@@ -8,7 +8,7 @@ require_relative './model.rb'
 enable :sessions
 
 before do
-    # p request.path_info, request.request_method
+    p request.path_info, request.request_method
     if request.request_method == "GET"
         if session[:current_route] != nil
             session[:last_route_visited] = session[:current_route]
@@ -83,7 +83,7 @@ def rank_with_id(inp_array, term)
     # p array
     sorted_arr = []
     array.each do |item|
-        p item["variable"]
+        # p item["variable"]
         score = 0
         i = 0
         # p item["variable"][i..i + term.length-1]
@@ -102,7 +102,7 @@ def rank_with_id(inp_array, term)
             # p sorted_arr
             i = 0
             while i < sorted_arr.length && sorted_arr[i][1] >= score
-                p sorted_arr[i][1]
+                # p sorted_arr[i][1]
                 # p sorted_arr[i]
                 i += 1
             end
@@ -290,6 +290,7 @@ post("/follow/:user_to_follow") do
     db = get_dataBase()
     db.execute("INSERT INTO Follower_rel VALUES (#{user_to_follow_id}, #{session[:user]["id"]})")
     db.execute("UPDATE Users SET followers = #{db.execute("SELECT followers FROM Users  where id = ?", user_to_follow_id).first["followers"] + 1} WHERE id = ?", user_to_follow_id)
+    p "current rout is: " + session[:current_route] + ", and the previous route is: " + session[:last_route_visited]
     redirect(session[:current_route])
 end
 
@@ -303,7 +304,11 @@ post("/unfollow/:user_to_unfollow_id") do
 end
 
 get('/problems/show') do
-    slim(:"problems/index")
+    if session[:user] != nil
+        slim(:"problems/index")
+    else
+        slim(:log_in_error)
+    end
 end
 
 get('/problems/show/:boulder_name') do 
@@ -329,9 +334,9 @@ post('/problems') do
     grade = params[:grade]
     location = params[:location]
     description = params[:description]
-    p boulder_name, location, session[:user]["id"], description, grade, path
+    # p boulder_name, location, session[:user]["id"], description, grade, path
 
-    db.execute("INSERT INTO Problems (name, location, set_by, description, grade, pic_path) VALUES (?,?,?,?,?,?)", boulder_name, location, session[:user]["id"], description, grade, path)
+    db.execute("INSERT INTO Problems (name, location, set_by, description, grade, pic_path) VALUES (?,?,?,?,?,?)", boulder_name, location, session[:user]["username"], description, grade, path)
     redirect("/problems/show/#{boulder_name}")
 end
 
@@ -342,10 +347,10 @@ end
 get('/feed') do
     db = get_dataBase()
     if session[:user] == nil
-        return "<p>must be logged in to view this content</p>"
+        slim(:log_in_error)
     end
     follows_id = db.execute("SELECT user_id FROM Follower_rel WHERE followed_by_id = #{session[:user]["id"]}")
-    p follows_id
+    # p follows_id
     relevant_posts = []
     follows_id.each do |id_following|
         content = db.execute("SELECT * FROM Posts WHERE user_id = #{id_following["user_id"]}")
@@ -354,7 +359,7 @@ get('/feed') do
         end
     end
     relevant_posts = rank_relevance(relevant_posts)
-    p relevant_posts
+    # p relevant_posts
     slim(:feed, locals:{relevant_posts:relevant_posts})
 end
 

@@ -340,3 +340,17 @@ a {
     height: 8vw;
     margin-right:0.5vw;
 }
+
+textarea {
+    height: 10vh;
+    width:30vw;
+
+}
+
+.grid_row {
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    
+}
