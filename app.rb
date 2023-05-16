@@ -8,7 +8,7 @@ require_relative './model.rb'
 enable :sessions
 
 before do
-    p request.path_info, request.request_method
+    # p request.path_info, request.request_method
     if request.request_method == "GET"
         if session[:current_route] != nil
             session[:last_route_visited] = session[:current_route]
@@ -16,22 +16,6 @@ before do
         session[:current_route] = request.path_info
     end
     p session[:current_route]
-end
-
-# def change_routes(current_route)
-#     session[:last_route_visited] = session[:current_route]
-#     session[:current_route] = current_route
-# end
-
-def get_dataBase()
-    db = SQLite3::Database.new("db/Database.db")
-    db.results_as_hash = true
-    return db
-end
-
-def update_user_info()
-    db = get_dataBase()
-    session[:user] = db.execute("SELECT * FROM Users WHERE id = ?", session[:user]["id"]).first
 end
 
 def rank(inp_array, term)
@@ -131,16 +115,7 @@ end
 post('/log_in') do
     username = params["username"]
     password = params["password"]
-    db = get_dataBase()
-    password_from_db = db.execute("SELECT password_digest FROM Users WHERE username = ?", username).first
-    # p password_from_db
-    if password_from_db == nil
-        session[:log_in_error] = "Username does not exist"
-    elsif BCrypt::Password.new(password_from_db["password_digest"]) == password
-        session[:user] = db.execute("SELECT * FROM Users WHERE username = ?", username).first
-    else
-        session[:log_in_error] = "Password is incorrect"
-    end
+    log_in(username, password)
     redirect("#{session[:current_route]}")
 end
 
@@ -161,8 +136,7 @@ post('/users') do
     new_username = params["username"]
     password = params["password"]   
     password_conf = params["password_confirmation"]
-    db = get_dataBase()
-    username_arr = db.execute("SELECT username FROM Users")
+    username_arr = get_users()
     i = 0
     username_exists = false
     while i < username_arr.length && username_exists == false
@@ -175,6 +149,10 @@ post('/users') do
         session[:raise_error] = true
         session[:error_message] = "Username is already taken"
         redirect("/users/new")
+    elsif new_username.length > 20
+        session[:raise_error] = true
+        session[:error_message] = "Username is longer then 20 characters"
+        redirect("/users/new")
     elsif password.length < 8
         session[:raise_error] = true
         session[:error_message] = "password must be atleast 8 characters long"
@@ -185,8 +163,8 @@ post('/users') do
         redirect("/users/new")
     end
     password_digest = BCrypt::Password.create(password)
-    db.execute("INSERT INTO Users (username, password_digest) VALUES (?,?)",new_username, password_digest)
-    session[:user] = db.execute("SELECT * FROM Users WHERE username = ?", new_username).first
+    create_user(new_username, password_digest)
+    log_in_username(new_username)
     redirect("#{session[:last_route_visited]}")
 end
 
@@ -199,59 +177,8 @@ get('/search') do
         session[:search_error] = "Cannot search without input"
         redirect(session[:last_route_visited])
     else
-        db = get_dataBase()
-        # results = {:Users => [], :Problems => []}
-        results = {"Users" => [], "Problems" => []}
-        result_data_array = {"Users" => [], "Problems" => []}
-        [{:table_name => "Users", :variables => ["username"]}, {:table_name => "Problems", :variables => ["name", "location"]}].each do |table|
-            # table[:variables].each do |variable|
-            #     # p table, variable
-            #     content = db.execute("SELECT #{variable} FROM #{table[:table_name]} WHERE #{variable} LIKE '%#{search_input}%'")
-            #     p content
-            #     content.each do |item|
-            #         # p item[variable]
-            #         results[table[:table_name]] << item[variable]
-            #     end
-            #     p results
-            #     results[table[:table_name]] = rank(results[table[:table_name]], search_input)
-            #     results[table[:table_name]].each do |result|
-            #         # p result, "resultat"
-            #         # p db.execute("SELECT id FROM #{table[:table_name]} WHERE #{variable} = ?", result), variable
-            #         if db.execute("SELECT * FROM #{table[:table_name]} WHERE #{variable} = ?", result).first != nil
-            #             result_array[table[:table_name]] << db.execute("SELECT * FROM #{table[:table_name]} WHERE #{variable} = ?", result).first
-                        
-            #         end
-            #     end
-            #     # if content.includes?(search_input)
-            #     # p result_array
-            # end
-            query = ""
-            table[:variables].each_with_index do |variable, i|
-                if i > 0
-                    query += " OR #{variable} LIKE '%#{search_input}%'"
-                else
-                    query += "#{variable} LIKE '%#{search_input}%'"
-                end
-            end
-            p "SELECT * FROM #{table[:table_name]} WHERE #{query}"
-            content = db.execute("SELECT * FROM #{table[:table_name]} WHERE #{query}")
-            # p content
-            unsorted_result = []
-            content.each do |cont|
-                arr = []
-                table[:variables].each do |variable|
-                    arr << cont[variable]
-                end
-                # variable_to_show = rank(arr, search_input).first
-                unsorted_result << {"variable" => rank(arr, search_input).first, "id" => cont["id"]}
-            end
-            p unsorted_result
-            results[table[:table_name]] = rank_with_id(unsorted_result, search_input)
-            results[table[:table_name]].each do |result|
-                result_data_array[table[:table_name]] << db.execute("SELECT * FROM #{table[:table_name]} WHERE id LIKE ?", result["id"]).first
-            end
-        end
-        p result_data_array
+        result_data_array = find_search_results(search_input)
+        # p result_data_array
         slim(:search_results, locals:{result_array:result_data_array})
     end
 end
@@ -260,11 +187,11 @@ get('/profile/:username') do
     username = params[:username]
     user_data = get_where("*", "Users", "username", username).first
     # p user_data
-    slim(:"profile/show", locals:{user_data:user_data})
+    slim(:"users/show", locals:{user_data:user_data})
 end
 
 get('/profile/self/edit') do
-    slim(:"profile/edit")
+    slim(:"users/edit")
 end
 post('/change_profile_pic') do
     # p params[:file]
@@ -279,51 +206,44 @@ end
 
 post('/change_bio') do
     new_bio = params[:new_bio]
-    db = get_dataBase()
-    db.execute("UPDATE Users SET bio = ? WHERE id = #{session[:user]["id"]}", new_bio)
+    update_bio(new_bio)
     update_user_info()
     redirect('profile/self/edit')
 end
 
 post("/follow/:user_to_follow") do
     user_to_follow_id = params[:user_to_follow]
-    db = get_dataBase()
-    db.execute("INSERT INTO Follower_rel VALUES (#{user_to_follow_id}, #{session[:user]["id"]})")
-    db.execute("UPDATE Users SET followers = #{db.execute("SELECT followers FROM Users  where id = ?", user_to_follow_id).first["followers"] + 1} WHERE id = ?", user_to_follow_id)
-    p "current rout is: " + session[:current_route] + ", and the previous route is: " + session[:last_route_visited]
+    follow(user_to_follow_id)
+    # p "current rout is: " + session[:current_route] + ", and the previous route is: " + session[:last_route_visited]
     redirect(session[:current_route])
 end
 
 post("/unfollow/:user_to_unfollow_id") do
     user_to_unfollow_id = params[:user_to_unfollow_id]
-    db = get_dataBase()
-    db.execute("DELETE FROM Follower_rel WHERE (user_id, followed_by_id) = (?,?)", user_to_unfollow_id, session[:user]["id"])
-    db.execute("UPDATE Users SET followers = #{db.execute("SELECT followers FROM Users  where id = ?", user_to_unfollow_id).first["followers"] - 1} WHERE id = ?", user_to_unfollow_id)
+    unfollow(user_to_unfollow_id)
     # redirect("/profile/#{db.execute("SELECT username FROM Users WHERE id = #{user_to_unfollow_id}").first["username"]}")
     redirect(session[:current_route])
 end
 
-get('/problems/show') do
+get('/boulders/show') do
     if session[:user] != nil
-        slim(:"problems/index")
+        slim(:"boulders/index")
     else
         slim(:log_in_error)
     end
 end
 
-get('/problems/show/:boulder_name') do 
+get('/boulders/show/:boulder_name') do 
     boulder_name = params[:boulder_name]
-    db = get_dataBase()
-    boulder_data = db.execute("SELECT * FROM Problems WHERE name = ?", boulder_name).first
-    slim(:"problems/show", locals:{boulder_data:boulder_data})
+    boulder_data = get_boulder_from_name(boulder_name)
+    slim(:"boudlers/show", locals:{boulder_data:boulder_data})
 end
 
-get('/problems/new') do 
-    slim(:"problems/new")
+get('/boulders/new') do 
+    slim(:"boulders/new")
 end
 
-post('/problems') do
-    db = get_dataBase()
+post('/boulders') do
     if params[:file] != nil
         path = File.join("./public/uploaded_pictures/",params[:file][:filename])
         File.write(path,File.read(params[:file][:tempfile]))
@@ -336,8 +256,8 @@ post('/problems') do
     description = params[:description]
     # p boulder_name, location, session[:user]["id"], description, grade, path
 
-    db.execute("INSERT INTO Problems (name, location, set_by, description, grade, pic_path) VALUES (?,?,?,?,?,?)", boulder_name, location, session[:user]["username"], description, grade, path)
-    redirect("/problems/show/#{boulder_name}")
+    create_boulder(boudler_name, grade, location, description, path)
+    redirect("/boulders/show/#{boulder_name}")
 end
 
 def rank_relevance(posts)
@@ -345,22 +265,83 @@ def rank_relevance(posts)
 end
 
 get('/feed') do
-    db = get_dataBase()
     if session[:user] == nil
         slim(:log_in_error)
+    else
+        relevant_posts = get_relevent_posts()
+        slim(:feed, locals:{relevant_posts:relevant_posts})
     end
-    follows_id = db.execute("SELECT user_id FROM Follower_rel WHERE followed_by_id = #{session[:user]["id"]}")
-    # p follows_id
-    relevant_posts = []
-    follows_id.each do |id_following|
-        content = db.execute("SELECT * FROM Posts WHERE user_id = #{id_following["user_id"]}")
-        if content.length > 0
-            relevant_posts << content
-        end
-    end
-    relevant_posts = rank_relevance(relevant_posts)
-    # p relevant_posts
-    slim(:feed, locals:{relevant_posts:relevant_posts})
 end
 
-# clear_table("Follower_rel")
+post('/tick/:boulder_id/:type') do
+    boulder_id = params[:boulder_id]
+    type = params[:type]
+    if type == "flashed" || type == "sent" || type == "not_sent"
+        tick_boulder(boulder_id, type)
+        post_boulder(type, boulder_id)
+    end
+    redirect(session[:current_route])
+end
+
+post('/untick/:boulder_id') do 
+    boulder_id = params[:boulder_id].to_i
+    untick_boulder(boulder_id)
+    redirect(session[:current_route])
+end
+
+post('/posts') do
+    text = params[:new_post_text]
+    create_post(text)
+    redirect(session[:current_route])
+end
+
+get('/post/show/:post_id') do
+    post_id = params[:post_id]
+    post_chain = get_post_chain(post_id)
+    p "post chain is:",post_chain
+    comments = get_comments(post_id)
+    slim(:"posts/show", locals:{post_chain:post_chain, comments:comments})
+end
+
+post('/like_post/:post_id') do
+    post_id = params[:post_id]
+    like_post(post_id)
+    redirect(session[:current_route])
+end
+
+post('/unlike_post/:post_id') do
+    post_id = params[:post_id]
+    unlike_post(post_id)
+    redirect(session[:current_route])
+end
+
+post('/comment/:commented_on_id') do 
+    commented_on_id = params[:commented_on_id]
+    text = params[:new_comment_text]
+    post_comment(text, commented_on_id)
+    redirect(session[:current_route])
+end
+
+get('/manege_posts') do
+    if session[:user] != nil && session[:user]["permission"] == "admin"
+        posts = get_all_posts()
+        slim(:"posts/manege", locals:{posts:posts})
+    else
+        redirect(session[:last_route_visited])
+    end
+end
+
+post('/posts/update/:post_id') do
+    post_id = params[:post_id]
+    new_text = params[:new_text]
+    update_text(post_id, new_text)
+    redirect(session[:current_route])
+end
+
+post('/posts/delete/:post_id') do
+    post_id = params[:post_id]
+    delete_post(post_id)
+    redirect(session[:current_route])
+end
+
+# clear_table("Posts")

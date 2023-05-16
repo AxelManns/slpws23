@@ -1,0 +1,67 @@
+- post_chain 
+- comments
+
+- if post_chain != nil
+    - post_chain.reverse().each do |post|
+        - poster = get_user(post["user_id"])
+        a class="post_container" href="/post/show/#{post["id"]}"
+            .pic_name_box 
+                div
+                    - if post["boulder_id"] == nil 
+                        / img src="#{poster["profile_pic"]}" alt="" class="profile_pic_post"/
+                        form action="/profile/#{poster["username"]}" method="get"
+                            input type="image" src="#{poster["profile_pic"]}" class="profile_pic_post"
+                        h2 = poster["username"]
+                    / / img src="#{poster["profile_pic"]}" alt="" class="profile_pic_post"/
+                    / form action="/profile/#{poster["username"]}" method="get"
+                    /     input type="image" src="#{poster["profile_pic"]}" class="profile_pic_post"
+                    / h2 = poster["username"]
+                .time
+                    p = post["date_posted"]
+                    p = post["time_posted"]
+            .text_box_post
+                - if post["boulder_id"] != nil
+                    h2 = post["text"]
+                - else 
+                    p = post["text"]
+                .likes 
+                    - if session[:user] != nil 
+                        - if is_liked(post["id"])
+                            form action="/unlike_post/#{post["id"]}" method="post"
+                                input type="image" src="/img/like-pic-red.png" class="like_button"
+                        - else 
+                            form action="/like_post/#{post["id"]}" method="post"
+                                input type="image" src="/img/like-pic.png" class="like_button"
+                    p = number_of_likes(post["id"])
+
+    - if session[:user] != nil 
+        h2 Comment
+        form action="/comment/#{post_chain[0]["id"]}" method="post" enctype="multipart/form-data" id="post_form"
+            textarea# name="new_comment_text" cols="30" placeholder="Create post"
+            section 
+                input type="file" name="attachment" /
+                input type="submit" value="Comment"/
+    h2 Comment Section
+    - comments.reverse().each do |comment|
+        - poster = get_user(comment["user_id"])
+        a class="post_container" href="/post/show/#{comment["id"]}"
+            .pic_name_box 
+                div
+                    / img src="#{poster["profile_pic"]}" alt="" class="profile_pic_post"/
+                    form action="/profile/#{poster["username"]}" method="get"
+                        input type="image" src="#{poster["profile_pic"]}" class="profile_pic_post"
+                    h2 = poster["username"]
+                .time
+                    p = comment["date_posted"]
+                    p = comment["time_posted"]
+            .text_box_post
+                p = comment["text"]
+                .likes 
+                    - if session[:user] != nil 
+                        - if is_liked(comment["id"])
+                            form action="/unlike_post/#{comment["id"]}" method="post"
+                                input type="image" src="/img/like-pic-red.png" class="like_button"
+                        - else 
+                            form action="/like_post/#{comment["id"]}" method="post"
+                                input type="image" src="/img/like-pic.png" class="like_button"
+                    p = number_of_likes(comment["id"])

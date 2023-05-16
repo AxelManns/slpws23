@@ -1,0 +1,87 @@
+/ label for="first_accent_check" First accent 
+/ input type="checkbox" class="first_accent_check" name="first_accent_check" value="true"
+/ p class="first_accent_check" apworeugh
+/ form action="/tick_boulder" method="post" id="tick_boulder_form"
+/     / label for="form" Tick off boulder 
+/     input list="boulders_search"/
+/     datalist
+/         option id="option_1" value="a"
+/         option id="option_2" value="b"
+/         option id="option_3" value="c"
+/         option id="option_4" value="d"
+/     input type="text" id="boulders_search"
+
+/     / const input_field = document.getElementById("boulders_search")
+/     - p "OWIEGIOYGAWREEGIAWERIRUG"
+/ javascript: 
+/     function change_values() {
+/         - input = document.getElementById("boulders_search").value
+/         - p input
+/         - top_results = get_top_results(input)
+/         - @i = 0
+/         - while @i < 4
+/             javascript: 
+/                 document.getElementById("option_#{@i}").value = top_results[@i];
+/             - @i += 1
+            
+/     }
+/     document.getElementById("boulders_search").addEventListener("change", change_values)
+
+/ form action="/establish_boulder" method="post" id="establish_boulder_form" class="hide"
+/     input type="file" name="file"
+/     input type="text" placeholder="Name of boulder" name="boulder_name"
+/     select#grade name="grade"
+/         - i = 0
+/         - string = ""
+/         - while i < 18
+/             option value="V#{i}"  V#{i}
+/             - string += "V#{i}" 
+/             - i += 1
+/         / - p string
+/     input type="text" placeholder="Location" name="location"
+/     input type="text" placeholder="First ascent by" name="first_ascent_by"
+/     textarea# name="problem_description_inp" cols="30" placeholder="add description"
+/     input type="submit" value="Establish"
+
+    / .first_accent_drop_down 
+
+    / lägger till en searchbar med autocomplete shit
+
+a href="/boulders/new" Establish new boulder
+
+/Discover boulders
+- boulders_sent = get_boulders_sent(session[:user]["id"])
+- if boulders_sent != nil 
+    #table_wrapper
+        table class="boulder_table"
+            thead 
+                th Boulder Name 
+                th Grade 
+                th Location 
+                th first ascent 
+                th status
+            thead 
+            tbody 
+                - boulders_sent.each do |boulder|
+                    tr
+                        td = boulder["name"]
+                        td = boulder["grade"]
+                        td = boulder["location"]
+                        td = boulder["first_ascent"]
+                        td id="boulder_status_in_table"
+                            - case tick_type(boulder, session[:user]["id"])
+                            - when "flashed"
+                                .tick_mark_table id="flashed"
+                                p flashed 
+                            - when "sent"
+                                .tick_mark_table id="redpoint"
+                                p sent 
+                            - when "not_sent"
+                                .tick_mark_table id="not_sent"
+                                p not sent 
+                        td 
+                            form action="/untick/#{boulder["id"]}" method="post"
+                                input type="submit" value="untick" class="untick_table"/
+
+
+

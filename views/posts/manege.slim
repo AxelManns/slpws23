@@ -1,0 +1,13 @@
+.manege_block id="manege_top"
+    p = "Id"
+    p = "User_id"
+    p = "Text"
+- posts.each do |post|
+    .manege_block
+        form action="/posts/update/#{post["id"]}" method="post" class="manege_form"
+            p = post["id"]
+            p = post["user_id"]
+            input type="text" value="#{post["text"]}" name="new_text"/ 
+            input type="submit" value="Update"
+        form action="/posts/delete/#{post["id"]}" method="post"
+            input type="submit" value="Delete"

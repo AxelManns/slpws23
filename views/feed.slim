@@ -1,6 +1,40 @@
-form action="/posts/new" method="post"
-    input type="text" name="text_content"
-    input list="boulders" name="boulder"
-    datalist
-        - get_boulders().each do |problem|
-            option value="#{problem["name"]}"
+#posts_wrapper
+    #create_post_container 
+        form action="/posts" method="post" enctype="multipart/form-data" id="post_form"
+            textarea# name="new_post_text" cols="30" placeholder="Create post"
+            section 
+                input type="file" name="attachment" /
+                input type="submit" value="Post"/
+        
+        img src="/img/double-arrow-right-icon-roterad.png" alt="" id="contract_mark" /
+    - posts = get_relevent_posts()
+    - posts.each do |post|
+        - poster = get_user(post["user_id"])
+        - reply_to = get_poster(post["posted_on"])
+        a class="post_container" href="/post/show/#{post["id"]}"
+            .pic_name_box 
+                div 
+                    - if post["boulder_id"] == nil 
+                        / img src="#{poster["profile_pic"]}" alt="" class="profile_pic_post"/
+                        form action="/profile/#{poster["username"]}" method="get"
+                            input type="image" src="#{poster["profile_pic"]}" class="profile_pic_post"
+                        h2 = poster["username"]
+                        - if reply_to != nil 
+                            h3 = "--> reply to " + reply_to["username"]
+                .time
+                    p = post["date_posted"]
+                    p = post["time_posted"]
+            .text_box_post
+                - if post["boulder_id"] != nil
+                    h2 = post["text"]
+                - else 
+                    p = post["text"]
+                .likes 
+                    - if session[:user] != nil 
+                        - if is_liked(post["id"])
+                            form action="/unlike_post/#{post["id"]}" method="post"
+                                input type="image" src="/img/like-pic-red.png" class="like_button"
+                        - else 
+                            form action="/like_post/#{post["id"]}" method="post"
+                                input type="image" src="/img/like-pic.png" class="like_button"
+                    p = number_of_likes(post["id"])

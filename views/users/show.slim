@@ -1,0 +1,118 @@
+#profile_wrapper
+    / #description
+        / style='background: url("#{user_data["banner"]}"); background-height:50%; background-repeat: no-repeat; background-size: 100% 100%;'
+    img id="banner" src="#{user_data["banner"]}" alt="banner"/
+
+    #description
+        #top_profile 
+            img src="#{user_data["profile_pic"]}" class="profile_pic" id="profile_site_pic"
+            / form action="/follow" method="post" 
+            /     input type="submit" value="Follow" id="follow_button" 
+        #text_block_profile 
+            #username_profile
+                h1 = user_data["username"]
+                - if session[:user] != nil && user_data["id"] != session[:user]["id"]
+                    - if !(follows?(user_data["id"], session[:user]["id"]))
+                        form action="/follow/#{user_data["id"]}" method="post" 
+                            input type="submit" value="Follow" class="follow_button" 
+                    - else 
+                        form action="/unfollow/#{user_data["id"]}" method="post" 
+                            input type="submit" value="Unfollow" class="follow_button" id="unfollow_button"
+            h3 = "Followers: #{user_data["followers"]}"
+            p id="profile_bio" #{user_data["bio"]}
+            - if session[:user] != nil && user_data["id"] == session[:user]["id"]
+                form action="/profile/self/edit" method="get" id="profile_edit"
+                    input type="submit" value="Edit profile"
+
+    #content_wrapper
+        #tabs 
+            .tab id="posts_tab_profile" Posts
+            .tab class="not_shown" id="boulders_tab_profile" Boulders
+        #profile_content_cointainer
+            #profile_posts class="profile_content"  
+                - posts = get_posts_from_user(user_data["id"])
+                / - p posts 
+                - poster = get_user(user_data["id"])
+                - p poster 
+                - if posts.length == 0
+
+                    h2 id="no_post_container" No posts available
+                - else 
+                    - posts.each do |post|
+                        / .post_wrapper 
+                        - reply_to = get_poster(post["posted_on"])
+                        a class="post_container" href="/post/show/#{post["id"]}"
+                            .pic_name_box 
+                                div 
+                                   - if post["boulder_id"] == nil 
+                                        / img src="#{poster["profile_pic"]}" alt="" class="profile_pic_post"/
+                                        form action="/profile/#{poster["username"]}" method="get"
+                                            input type="image" src="#{poster["profile_pic"]}" class="profile_pic_post"
+                                        h2 = poster["username"]
+                                        - if reply_to != nil 
+                                                h3 = "--> reply to " + reply_to["username"]
+                                .time
+                                    p = post["date_posted"]
+                                    p = post["time_posted"]
+                            .text_box_post
+                                - if post["boulder_id"] != nil
+                                    h2 = post["text"]
+                                - else 
+                                    p = post["text"]
+                                .likes 
+                                    - if session[:user] != nil 
+                                        - if is_liked(post["id"])
+                                            form action="/unlike_post/#{post["id"]}" method="post"
+                                                input type="image" src="/img/like-pic-red.png" class="like_button"
+                                        - else 
+                                            form action="/like_post/#{post["id"]}" method="post"
+                                                input type="image" src="/img/like-pic.png" class="like_button"
+                                    p = number_of_likes(post["id"])
+                            
+
+            #profile_boulders class="profile_content not_displayed"
+                / - p user_data
+                - boulders_sent = get_boulders_sent(user_data["id"])
+                / - p boulders_sent
+                - if boulders_sent != nil 
+                    #table_wrapper_profile
+                        table class="boulder_table"
+                            thead 
+                                th Boulder Name 
+                                th Grade 
+                                th Location 
+                                th first ascent 
+                                th status
+                            thead 
+                            tbody 
+                                - boulders_sent.each do |boulder|
+                                    tr
+                                        td = boulder["name"]
+                                        td = boulder["grade"]
+                                        td = boulder["location"]
+                                        td = boulder["first_ascent"]
+                                        td id="boulder_status_in_table"
+                                            - case tick_type(boulder, user_data["id"])
+                                            - when "flashed"
+                                                .tick_mark_table id="flashed"
+                                                p flashed 
+                                            - when "sent"
+                                                .tick_mark_table id="redpoint"
+                                                p sent 
+                                            - when "not_sent"
+                                                .tick_mark_table id="not_sent"
+                                                p not sent 
+                                        - if user_data == session[:user]
+                                            td 
+                                                form action="/untick/#{boulder["id"]}" method="post"
+                                                    input type="submit" value="untick" class="untick_table"/
+    #follows_box 
+        - p "detta händer"
+        - followes = get_top_5_follows(user_data["id"])
+        - followes.each do |follow|
+            .follow_container
+                a href="/profile/#{follow["username"]}"
+                    .top_row
+                        img src="#{follow["profile_pic"]}" alt="" class="follows_pics"/ 
+                        p = "Followers: #{follow["followers"]}"
+                    h3 = follow["username"]
