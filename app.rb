@@ -5,6 +5,8 @@ require 'sqlite3'
 require 'bcrypt'
 require_relative './model.rb'
 
+include Model
+
 enable :sessions
 
 before do
@@ -15,7 +17,7 @@ before do
         end
         session[:current_route] = request.path_info
     end
-    p session[:current_route]
+    # p session[:current_route]
 end
 
 def rank(inp_array, term)
@@ -113,9 +115,36 @@ get('/') do
 end
 
 post('/log_in') do
-    username = params["username"]
-    password = params["password"]
-    log_in(username, password)
+    if (session[:log_in_time_out] == nil || (Time.now - session[:log_in_time_out]) >= 0) && session[:recent_log_in_attempts] != nil && session[:recent_log_in_attempts] >= 3
+        session[:log_in_time_out] = Time.now + 20
+        session[:recent_log_in_attempts] = 0
+    end
+    # p session[:recent_log_in_attempts]
+    if  session[:log_in_time_out] == nil || Time.now - session[:log_in_time_out] >= 0
+        username = params["username"]
+        password = params["password"]
+        password_from_db = select_password(username)
+        # p password_from_db
+        if password_from_db == nil
+            session[:log_in_error] = "Username does not exist"
+        elsif BCrypt::Password.new(password_from_db["password_digest"]) == password
+            session[:user] = get_user_from_username(username)
+            # session[:log_in_error] = 
+        else
+            session[:log_in_error] = "Password is incorrect"
+        end
+        if  session[:log_in_error] != "" && session[:last_log_in_attempt] != nil && Time.now.sec - session[:last_log_in_attempt] < 10
+            session[:recent_log_in_attempts] += 1
+        else
+            # p "isugiyo<sg"
+            session[:last_log_in_attempt] = Time.now
+            session[:recent_log_in_attempts] = 0
+        end
+        # p session
+        # p "log in error medelandet är:", session[:log_in_error]
+    else
+        session[:log_in_error] = "To many failde attempts to log in, wait #{(session[:log_in_time_out] - Time.now).to_i}"
+    end
     redirect("#{session[:current_route]}")
 end
 
@@ -191,23 +220,29 @@ get('/profile/:username') do
 end
 
 get('/profile/self/edit') do
-    slim(:"users/edit")
+    if session[:user] == nil
+        slim(:not_access)
+    else
+        slim(:"users/edit")
+    end
 end
-post('/change_profile_pic') do
+post('/change_profile_pic/:user_id') do
     # p params[:file]
-    path = File.join("./public/uploaded_pictures/",params[:file][:filename])
-    File.write(path,File.read(params[:file][:tempfile]))
-    # db = get_dataBase()
-    # p path
-    # db.execute("UPDATE Users SET profile_pic = path")
-    update_user_info()
+    if session[:user]["id"] == params[:user_id]
+        path = File.join("./public/uploaded_pictures/",params[:file][:filename])
+        File.write(path,File.read(params[:file][:tempfile]))
+        update_user_info(path)
+    end
     redirect('profile/self/edit')
 end
 
-post('/change_bio') do
-    new_bio = params[:new_bio]
-    update_bio(new_bio)
-    update_user_info()
+post('/change_bio/:user_id') do
+    if session[:user]["id"] == params[:user_id].to_i
+        p "awlirehbgilawrbljhwrabvljhawer"
+        new_bio = params[:new_bio]
+        update_bio(new_bio)
+        update_user_info()
+    end
     redirect('profile/self/edit')
 end
 
@@ -258,10 +293,6 @@ post('/boulders') do
 
     create_boulder(boudler_name, grade, location, description, path)
     redirect("/boulders/show/#{boulder_name}")
-end
-
-def rank_relevance(posts)
-    return posts
 end
 
 get('/feed') do
@@ -340,8 +371,22 @@ end
 
 post('/posts/delete/:post_id') do
     post_id = params[:post_id]
-    delete_post(post_id)
+    if session[:user]["permission"] == "admin" || session[:user]["id"] == get_poster(post_id)
+        delete_post(post_id)
+    end
     redirect(session[:current_route])
 end
 
+get('/posts/edit/:post_id') do
+    post_id = params[:post_id]
+    post = get_post(post_id)
+    if session[:user] == nil || post["user_id"] != session[:user]["id"]
+        slim(:not_access) 
+    else 
+        slim(:"posts/edit", locals:{post:post})
+    end
+end
+
+# clear_table("Like_rel")
 # clear_table("Posts")
+# clear_table("Follower_rel")

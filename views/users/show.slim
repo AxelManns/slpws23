@@ -33,7 +33,7 @@
                 - posts = get_posts_from_user(user_data["id"])
                 / - p posts 
                 - poster = get_user(user_data["id"])
-                - p poster 
+                / - p poster 
                 - if posts.length == 0
 
                     h2 id="no_post_container" No posts available
@@ -41,7 +41,9 @@
                     - posts.each do |post|
                         / .post_wrapper 
                         - reply_to = get_poster(post["posted_on"])
+                        / .post_container onclick="/post/show/#{post["id"]}"
                         a class="post_container" href="/post/show/#{post["id"]}"
+                            / a class="post_link" href="/post/show/#{post["id"]}"
                             .pic_name_box 
                                 div 
                                    - if post["boulder_id"] == nil 
@@ -54,11 +56,21 @@
                                 .time
                                     p = post["date_posted"]
                                     p = post["time_posted"]
-                            .text_box_post
+                            
+                            
+                            
+                            .text_box_post   
                                 - if post["boulder_id"] != nil
                                     h2 = post["text"]
                                 - else 
                                     p = post["text"]
+                                - if session[:user] != nil && post["user_id"] == session[:user]["id"]
+                                    - p "detta händer någon gång"
+                                    form action="/posts/edit/#{post["id"]}" method="get"
+                                        / textarea# name="new_text" cols="30" rows="10" ="#{post["text"]}" 
+                                        input type="submit" value="Edit"
+                                    form action="/posts/delete/#{post["id"]}" method="post"
+                                        input type="submit" value="Delete" /
                                 .likes 
                                     - if session[:user] != nil 
                                         - if is_liked(post["id"])
@@ -107,7 +119,7 @@
                                                 form action="/untick/#{boulder["id"]}" method="post"
                                                     input type="submit" value="untick" class="untick_table"/
     #follows_box 
-        - p "detta händer"
+        / - p "detta händer"
         - followes = get_top_5_follows(user_data["id"])
         - followes.each do |follow|
             .follow_container

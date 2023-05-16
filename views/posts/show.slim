@@ -33,7 +33,7 @@
                             form action="/like_post/#{post["id"]}" method="post"
                                 input type="image" src="/img/like-pic.png" class="like_button"
                     p = number_of_likes(post["id"])
-
+    - p post_chain
     - if session[:user] != nil 
         h2 Comment
         form action="/comment/#{post_chain[0]["id"]}" method="post" enctype="multipart/form-data" id="post_form"

@@ -1,9 +1,10 @@
 h3 Change profile picture 
-form action="/change_profile_pic" method="post" enctype="multipart/form-data"
+form action="/change_profile_pic/#{session[:user]["id"]}" method="post" enctype="multipart/form-data"
     input type="file" name="file"
     input type="submit" value="Upload"
 
 h3 Edit biographi
-form action="/change_bio" method="post"
+- p session[:user]["bio"]
+form action="/change_bio/#{session[:user]["id"]}" method="post"
     input type="text" value="#{session[:user]["bio"]}" name="new_bio"
     input type="submit" value="Update"

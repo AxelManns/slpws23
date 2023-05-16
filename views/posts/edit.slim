@@ -1,0 +1,41 @@
+- reply_to = get_poster(post["posted_on"])
+- poster = get_poster(post["id"])
+/ .post_container onclick="/post/show/#{post["id"]}"
+/ a class="post_container" href="/post/show/#{post["id"]}"
+.post_container 
+    / a class="post_link" href="/post/show/#{post["id"]}"
+    .pic_name_box 
+        div 
+        - if post["boulder_id"] == nil 
+                / img src="#{poster["profile_pic"]}" alt="" class="profile_pic_post"/
+                form action="/profile/#{poster["username"]}" method="get"
+                    input type="image" src="#{poster["profile_pic"]}" class="profile_pic_post"
+                h2 = poster["username"]
+                - if reply_to != nil 
+                        h3 = "--> reply to " + reply_to["username"]
+        .time
+            p = post["date_posted"]
+            p = post["time_posted"]
+    
+    - if session[:user] != nil && post["user_id"] == session[:user]["id"]
+        - p "detta händer någon gång"
+        form action="/posts/update/#{post["id"]}" method="post"
+            textarea# name="new_text" cols="30" rows="10" ="#{post["text"]}" 
+            input type="submit" value="Update"
+        form action="/posts/delete/#{post["id"]}" method="post"
+            input type="submit" value="Delete" /
+    - else
+        .text_box_post   
+            - if post["boulder_id"] != nil
+                h2 = post["text"]
+            - else 
+                p = post["text"]
+            .likes 
+                - if session[:user] != nil 
+                    - if is_liked(post["id"])
+                        form action="/unlike_post/#{post["id"]}" method="post"
+                            input type="image" src="/img/like-pic-red.png" class="like_button"
+                    - else 
+                        form action="/like_post/#{post["id"]}" method="post"
+                            input type="image" src="/img/like-pic.png" class="like_button"
+                p = number_of_likes(post["id"])
